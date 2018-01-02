@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/astaxie/beego"
@@ -17,6 +18,7 @@ type BitcoinSite struct {
 }
 
 type TxInfo struct {
+	IsIN     bool
 	Updated  bool
 	Type     string
 	TxPrefix string
@@ -79,6 +81,7 @@ func (c *MainController) Get() {
 		hash := gjson.Get(content, "data.list.#.hash").Array()
 		amount := gjson.Get(content, "data.list.#.inputs_value").Array()
 		created := gjson.Get(content, "data.list.#.created_at").Array()
+		inputs := gjson.Get(content, "data.list.#.inputs").Array()
 
 		for index, iterm := range hash {
 			txinfo := TxInfo{}
@@ -99,19 +102,23 @@ func (c *MainController) Get() {
 				txinfo.Updated = true
 			}
 
+			if(!strings.Contains(inputs[index].String(), value.Site)){
+				txinfo.IsIN = true
+			}
+
 			info[value.Site] = append(info[value.Site], txinfo)
 		}
 	}
 
 	address := make([]string, 0)
-	for key,iterm := range info{
-		address = append(address, iterm[0].Date + key)
+	for key, iterm := range info {
+		address = append(address, iterm[0].Date+key)
 	}
 
 	sort.Strings(address)
 	l := len(address)
 	str := make([]string, 0)
-	for i := l- 1; i >= 0; i--{
+	for i := l - 1; i >= 0; i-- {
 		str = append(str, address[i][19:])
 	}
 	c.Data["str"] = str
@@ -129,3 +136,30 @@ func getContet(url string) string {
 	content, _ := ioutil.ReadAll(get.Body)
 	return string(content)
 }
+
+/**
+[
+	[
+		{"addresses":["1KrNNBKZ1eovW7anXHhfv95drYwMKE7ayx"],
+		"value":129143420,
+		"type":"P2PKH",
+		"spent_by_tx":"4af0cea3ec7af8b4843726080d39b356805ef2cd70918ee25d50956b97dff3ef",
+		"spent_by_tx_position":53
+		},
+		{"addresses":["1JrsYGFSqvEArDsNAt96ViTTBsuJvypQwp"],
+		"value":3511815315,
+		"type":"P2PKH",
+		"spent_by_tx":"e9be116ac1f0894b822797ce989a5c05c4cdb3245ecc2fbb39fdf4582209ba60",
+		"spent_by_tx_position":0
+		}
+	]
+	[
+		{"addresses":["171C8gR2T5NEU8kMYTo3vTAioDUAhr5ACe"],
+		"value":3640962351,
+		"type":"P2PKH",
+		"spent_by_tx":"c3bb0ee836b0f2eac6b23c7ad12b9a35a50fe36b97a7c3c167ef6255ff3e62eb",
+		"spent_by_tx_position":0
+		}
+	]
+]
+*/

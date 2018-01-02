@@ -5,13 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>比特币地址跟踪</title>
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <style>
+        .bold{
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
-    <nav class="navbar navbar-default">
+    <nav class="navbar navbar-inverse">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="#">
+                <a class="navbar-brand" href="">
                     <p>比特币地址跟踪</p>
                 </a>
             </div>
@@ -22,7 +27,13 @@
         {{$elem := (index $.lists $iterm)}}
         <div class="panel panel-default">
         {{$add := (index $elem 0)}}
-            <div class="panel-heading"><a href="{{$add.AdPrefix}}{{$iterm}}" target="_blank">{{$iterm}}</a><span class="text-primary" style="float: right;">{{$add.Type}}</span></div>
+            <div class="panel-heading"><a href="{{$add.AdPrefix}}{{$iterm}}" target="_blank">{{$iterm}}</a><span class="
+            {{if eq $add.Type "BTC"}}
+                text-primary bold
+                {{else}}
+                text-success bold
+                {{end}}
+            " style="float: right;">{{$add.Type}}</span></div>
             <div class="panel-body">
                 <ul class="list-group">
                     {{range $elem}}
@@ -30,7 +41,13 @@
                             {{if .Updated}}
                                 color: #ff0000;
                             {{end}}
-                            " href="{{.TxPrefix}}{{.TxID}}" target="_blank">{{.TxID}}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span>${{.Amount}}</span><span style="float: right;">{{.Date}}</span></li>
+                            " href="{{.TxPrefix}}{{.TxID}}" target="_blank">{{.TxID}}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
+                        {{if .IsIN}}
+                            class="text-success"
+                        {{else}}
+                            class="text-danger"
+                        {{end}}
+                        >${{.Amount}}</span><span style="float: right;">{{.Date}}</span></li>
                     {{end}}
                 </ul>
             </div>
