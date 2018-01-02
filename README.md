@@ -5,7 +5,7 @@
 - easily deploy(just modify app.conf file and it will work)
 - clear debug output(benefit by beego)
 
-###### How to use
+##### How to use
 
 clone this reposity
 ```
