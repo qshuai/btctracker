@@ -1,4 +1,4 @@
-### This is a simply program based on beego web framework! It aims to monitor your specified bitcoin sites for any changes. But it only supports BTC and BCH at now, and you can edit this reposity to meet your requirement.
+### This is a simply program based on beego web framework! It aims to monitor your specified bitcoin sites for any changes. But it only supports BTC and BCH at now, and you can edit this repository to meet your requirement.
 
 ##### Features
 

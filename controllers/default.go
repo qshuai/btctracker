@@ -64,6 +64,8 @@ func (c *MainController) Index() {
 		}
 
 		content := getContet(prefix + value.Site)
+
+		//API request rate limit
 		time.Sleep(500*time.Millisecond)
 
 		hash := gjson.Get(content, "data.list.#.hash").Array()
