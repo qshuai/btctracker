@@ -12,11 +12,13 @@ import (
 	"go4.org/sort"
 )
 
+//site information
 type BitcoinSite struct {
 	Site string
 	T    string
 }
 
+//tx relational information
 type TxInfo struct {
 	IsIN     bool
 	Updated  bool
@@ -28,63 +30,54 @@ type TxInfo struct {
 	Amount   float64
 }
 
-var siteInfo []BitcoinSite = []BitcoinSite{
-	{"12Hr4LUeUviQTrHsJtJgy8BgCQ7kk9Nvz2", "BCH"},
-	{"1JSX39z6ZuKhUzuAS5QYeLAqstQYXuYAzC", "BCH"},
-	{"171C8gR2T5NEU8kMYTo3vTAioDUAhr5ACe", "BCH"},
-	{"19tpkUX8MYsSzoP7RK8fL8QDBuZrnXterF", "BCH"},
-	{"18ceQ5wyKyUzvycyEzuc7bn7hbc6G1M6iT", "BCH"},
-	{"19R7YqtA2hTW8dbswBtbDSai8HMd9hUdEE", "BCH"},
-	{"1PFjk6W1R5eGQGyHBgDLJ8wC653a59ZuXo", "BCH"},
-	{"1MTLZMBUHDM3mtgGswhcDDCZ1afLJ7FtkE", "BTC"},
-	{"1caSJZrCqzRtXgqaSzTkAuMhZK1Cm9tqy", "BTC"},
-	{"112xgV6Ejyn5tq8jRryJD28VZmBvnNnYY7", "BTC"},
-	{"12A9icBypaLsMBZdZEPpMnRYQFU66GYPvo", "BTC"},
-	{"1A9ayyRiWLRwYN7TCVRGNAKvnrQxV8eKRE", "BTC"},
-	{"114DFBtAXFrL4S4YxWfXEPyBQpMAQJMvUC", "BTC"},
-	{"1KrCGoiPUR4Q2yH3aZcWq1ZXZUieY6D3Qx", "BTC"},
-	{"1FzwvTsVtEmyndyrcYFM3WrjotaUezkRW8", "BTC"},
-	{"1PzUcJUGSX6D3vaejWMqeryAXThrWGAQCx", "BTC"},
-	{"1EMBJyFzA5WW1NBfGHDt8RKaGdZhMbBjqy", "BTC"},
-	{"1MtQqfoBQTH28aREpSwmxYo1dFkqGW22t6", "BTC"},
-	{"1NCaPoE5UTZpnLq2UXZ3296Yf4YRvnbqZM", "BTC"},
-	{"17hxK6AwSVBVqMheYNm8qmdzvS65abXmPZ", "BTC"},
-	{"1C6n9guftW3dZ3EHHsMGHvETLqnSTeANn5", "BTC"},
-	{"1HetHPqXPcEKv1eePp1FLusLcmxA2a1hez", "BTC"},
-	{"14qp5GhyezEz3N3NDceQW6EHqffcBXw9d3", "BTC"},
-	{"191yAE7Mwz4nGLgTydigbKn2AGNEPXGkYe", "BTC"},
-	{"1FYr29v8eVQ26WUruWA2KC9zuVShG3MbMd", "BTC"},
-	{"1DoAGgm3zAcPUtJje9ZyM9jZyAkL26nYA6", "BTC"},
-	{"1G2QbTNhYDhiQ8s6RJJMBD4sE8JffV5Pso", "BTC"},
-	{"1FhdGQ8tCFkgfeFqyGHrYNJEJXMQ2bVGjy", "BTC"},
-}
+//read configuration
+var sites []string = beego.AppConfig.Strings("watchsite")
+var types []string = beego.AppConfig.Strings("watchtype")
 
+//define global variable
+var siteInfo []BitcoinSite
+
+//just do this
 type MainController struct {
 	beego.Controller
 }
 
-func (c *MainController) Get() {
+//Get Method for data list
+func (c *MainController) Index() {
+	//create empty map for store data
 	var info = make(map[string][]TxInfo)
 
+	//get all sites
+	for index,value := range sites{
+		siteInfo = append(siteInfo, BitcoinSite{value, types[index]})
+	}
+
+	//
 	length := len(siteInfo)
 	for i := 0; i < length; i++ {
 		value := siteInfo[i]
 		var prefix string
 		if value.T == "BTC" {
-			prefix = "https://chain-vip-bj.api.btc.com/v3/address/"
+			prefix = beego.AppConfig.String("btcprefix")
 		} else {
-			prefix = "https://bcc-chain-vip-bj.api.btc.com/v3/address/"
+			prefix = beego.AppConfig.String("bchprfix")
 		}
 
 		content := getContet(prefix + value.Site)
+		time.Sleep(500*time.Millisecond)
 
 		hash := gjson.Get(content, "data.list.#.hash").Array()
-		amount := gjson.Get(content, "data.list.#.inputs_value").Array()
+
+		//if you just want inputs_value, please justify as following:
+		//amount := gjson.Get(content, "data.list.#.inputs_value").Array()
+		amount := gjson.Get(content, "data.list.#.outputs_value").Array()
 		created := gjson.Get(content, "data.list.#.created_at").Array()
 		inputs := gjson.Get(content, "data.list.#.inputs").Array()
 
+		//assembly data
 		for index, iterm := range hash {
 			txinfo := TxInfo{}
+			//just support BTC and BCH
 			if value.T == "BTC" {
 				txinfo.TxPrefix = "https://btc.com/"
 				txinfo.AdPrefix = "https://btc.com/"
@@ -102,30 +95,36 @@ func (c *MainController) Get() {
 				txinfo.Updated = true
 			}
 
+			//justify whether income or expense
 			if(!strings.Contains(inputs[index].String(), value.Site)){
 				txinfo.IsIN = true
 			}
 
+			//get final result
 			info[value.Site] = append(info[value.Site], txinfo)
 		}
+
 	}
 
+	//sort map indirectly
 	address := make([]string, 0)
 	for key, iterm := range info {
 		address = append(address, iterm[0].Date+key)
 	}
-
 	sort.Strings(address)
 	l := len(address)
 	str := make([]string, 0)
 	for i := l - 1; i >= 0; i-- {
 		str = append(str, address[i][19:])
 	}
+
+	//delivery to template
 	c.Data["str"] = str
 	c.Data["lists"] = info
 	c.TplName = "index.html"
 }
 
+//get http raw data
 func getContet(url string) string {
 	get, err := http.Get(url + "/tx")
 	if err != nil {
@@ -136,30 +135,3 @@ func getContet(url string) string {
 	content, _ := ioutil.ReadAll(get.Body)
 	return string(content)
 }
-
-/**
-[
-	[
-		{"addresses":["1KrNNBKZ1eovW7anXHhfv95drYwMKE7ayx"],
-		"value":129143420,
-		"type":"P2PKH",
-		"spent_by_tx":"4af0cea3ec7af8b4843726080d39b356805ef2cd70918ee25d50956b97dff3ef",
-		"spent_by_tx_position":53
-		},
-		{"addresses":["1JrsYGFSqvEArDsNAt96ViTTBsuJvypQwp"],
-		"value":3511815315,
-		"type":"P2PKH",
-		"spent_by_tx":"e9be116ac1f0894b822797ce989a5c05c4cdb3245ecc2fbb39fdf4582209ba60",
-		"spent_by_tx_position":0
-		}
-	]
-	[
-		{"addresses":["171C8gR2T5NEU8kMYTo3vTAioDUAhr5ACe"],
-		"value":3640962351,
-		"type":"P2PKH",
-		"spent_by_tx":"c3bb0ee836b0f2eac6b23c7ad12b9a35a50fe36b97a7c3c167ef6255ff3e62eb",
-		"spent_by_tx_position":0
-		}
-	]
-]
-*/
