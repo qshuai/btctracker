@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/astaxie/beego"
@@ -34,21 +35,67 @@ type TxInfo struct {
 var sites []string = beego.AppConfig.Strings("watchsite")
 var types []string = beego.AppConfig.Strings("watchtype")
 
-//define global variable
-var siteInfo []BitcoinSite
+var self *MainController
+var once sync.Once
 
 //just do this
 type MainController struct {
 	beego.Controller
+
+	siteInfo  []BitcoinSite
+	info      map[string][]TxInfo
+	str       []string
+	IsUpdated bool
+	lock      sync.RWMutex
+}
+
+func GetMainController() *MainController {
+	once.Do(func() {
+		self = &MainController{
+			siteInfo:  []BitcoinSite{},
+			info:      make(map[string][]TxInfo),
+			str:       []string{},
+			IsUpdated: false,
+			lock:      sync.RWMutex{},
+		}
+	})
+
+	return self
 }
 
 //Get Method for data list
 func (c *MainController) Index() {
-	//create empty map for store data
-	var info = make(map[string][]TxInfo)
+	controller := GetMainController()
+	controller.lock.RLock()
+	defer controller.lock.RUnlock()
+
+	//delivery to template
+	c.Data["str"] = controller.str
+	c.Data["lists"] = controller.info
+	c.TplName = "index.html"
+}
+
+//get http raw data
+func getContet(url string) string {
+	get, err := http.Get(url + "/tx")
+	if err != nil {
+		fmt.Println(err)
+		return ""
+	}
+	defer get.Body.Close()
+	content, _ := ioutil.ReadAll(get.Body)
+	return string(content)
+}
+
+//store data
+func (c *MainController) StoreDate() {
+	siteInfo := []BitcoinSite{}
+	info := make(map[string][]TxInfo)
+	str := []string{}
+	isUpdated := false
 
 	//get all sites
-	for index,value := range sites{
+	for index, value := range sites {
 		siteInfo = append(siteInfo, BitcoinSite{value, types[index]})
 	}
 
@@ -66,7 +113,7 @@ func (c *MainController) Index() {
 		content := getContet(prefix + value.Site)
 
 		//API request rate limit
-		time.Sleep(500*time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 
 		hash := gjson.Get(content, "data.list.#.hash").Array()
 
@@ -94,11 +141,12 @@ func (c *MainController) Index() {
 			txinfo.Date = tm.Format("2006-01-02 15:04:05")
 			txinfo.TxID = iterm.String()
 			if created[index].Int() > 1514894400 {
+				isUpdated = true
 				txinfo.Updated = true
 			}
 
 			//justify whether income or expense
-			if(!strings.Contains(inputs[index].String(), value.Site)){
+			if !strings.Contains(inputs[index].String(), value.Site) {
 				txinfo.IsIN = true
 			}
 
@@ -115,25 +163,27 @@ func (c *MainController) Index() {
 	}
 	sort.Strings(address)
 	l := len(address)
-	str := make([]string, 0)
+
 	for i := l - 1; i >= 0; i-- {
 		str = append(str, address[i][19:])
 	}
 
-	//delivery to template
-	c.Data["str"] = str
-	c.Data["lists"] = info
-	c.TplName = "index.html"
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	c.info = info
+	c.siteInfo = siteInfo
+	c.str = str
+	c.IsUpdated = isUpdated
 }
 
-//get http raw data
-func getContet(url string) string {
-	get, err := http.Get(url + "/tx")
-	if err != nil {
-		fmt.Println(err)
-		return ""
+func (c *MainController) Timer(duration time.Duration) {
+	t := time.NewTimer(duration)
+	for {
+		select {
+		case <-t.C:
+			c.StoreDate()
+			t.Reset(duration)
+		}
 	}
-	defer get.Body.Close()
-	content, _ := ioutil.ReadAll(get.Body)
-	return string(content)
 }
