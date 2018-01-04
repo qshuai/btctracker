@@ -32,8 +32,8 @@ type TxInfo struct {
 }
 
 //read configuration
-var sites []string = beego.AppConfig.Strings("watchsite")
-var types []string = beego.AppConfig.Strings("watchtype")
+var sites = beego.AppConfig.Strings("watchsite")
+var types = beego.AppConfig.Strings("watchtype")
 
 var self *MainController
 var once sync.Once
@@ -63,6 +63,13 @@ func GetMainController() *MainController {
 	return self
 }
 
+func StoreAllBitSite() {
+	//get all sites
+	for index, value := range sites {
+		self.siteInfo = append(self.siteInfo, BitcoinSite{value, types[index]})
+	}
+}
+
 //Get Method for data list
 func (c *MainController) Index() {
 	controller := GetMainController()
@@ -89,20 +96,14 @@ func getContet(url string) string {
 
 //store data
 func (c *MainController) StoreDate() {
-	siteInfo := []BitcoinSite{}
 	info := make(map[string][]TxInfo)
-	str := []string{}
+	str := make([]string, 0)
 	isUpdated := false
 
-	//get all sites
-	for index, value := range sites {
-		siteInfo = append(siteInfo, BitcoinSite{value, types[index]})
-	}
-
 	//
-	length := len(siteInfo)
+	length := len(c.siteInfo)
 	for i := 0; i < length; i++ {
-		value := siteInfo[i]
+		value := c.siteInfo[i]
 		var prefix string
 		if value.T == "BTC" {
 			prefix = beego.AppConfig.String("btcprefix")
@@ -111,9 +112,6 @@ func (c *MainController) StoreDate() {
 		}
 
 		content := getContet(prefix + value.Site)
-
-		//API request rate limit
-		time.Sleep(500 * time.Millisecond)
 
 		hash := gjson.Get(content, "data.list.#.hash").Array()
 
@@ -172,7 +170,6 @@ func (c *MainController) StoreDate() {
 	defer c.lock.Unlock()
 
 	c.info = info
-	c.siteInfo = siteInfo
 	c.str = str
 	c.IsUpdated = isUpdated
 }
