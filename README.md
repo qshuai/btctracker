@@ -19,7 +19,8 @@ go get github.com/tidwall/gjson
 ```
 run 
 ```
-//if you have install bee tool
+cd ./WatchBitcoinAddress
+//if you have installed bee tool
 bee run
 
 //optional scheme
