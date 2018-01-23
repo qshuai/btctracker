@@ -108,7 +108,7 @@ func (c *MainController) StoreDate() {
 		if value.T == "BTC" {
 			prefix = beego.AppConfig.String("btcprefix")
 		} else {
-			prefix = beego.AppConfig.String("bchprfix")
+			prefix = beego.AppConfig.String("bchprefix")
 		}
 
 		content := getContet(prefix + value.Site)
