@@ -1,0 +1,28 @@
+hash: ce3aa3f8728e9efea1bf8aea0f87504f80785fc155261542499fac40b5e1a754
+updated: 2018-03-27T10:14:39.465529+08:00
+imports:
+- name: github.com/astaxie/beego
+  version: cab8458c1c4a5a3b4bf5192922be620e6dede15b
+  subpackages:
+  - config
+  - context
+  - context/param
+  - grace
+  - logs
+  - session
+  - toolbox
+  - utils
+- name: github.com/tidwall/gjson
+  version: 9ed3f8e1a5d67a79157423b8d6f448d42b907f36
+- name: github.com/tidwall/match
+  version: 1731857f09b1f38450e2c12409748407822dc6be
+- name: go4.org
+  version: fba789b7e39ba524b9e60c45c37a50fae63a2a09
+  subpackages:
+  - reflectutil
+  - sort
+testImports:
+- name: github.com/smartystreets/goconvey
+  version: ef6db91d284a0e7badaa1f0c404c30aa7dee3aed
+  subpackages:
+  - convey

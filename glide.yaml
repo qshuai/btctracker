@@ -1,0 +1,11 @@
+package: .
+import:
+- package: github.com/astaxie/beego
+- package: github.com/tidwall/gjson
+- package: go4.org
+  subpackages:
+  - sort
+testImport:
+- package: github.com/smartystreets/goconvey
+  subpackages:
+  - convey

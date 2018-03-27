@@ -9,7 +9,7 @@
 
 ##### How to use
 
-clone this reposity
+clone this reporsity
 ```
 git clone https://github.com/qshuai/WatchBitcoinAddress.git
 ```
