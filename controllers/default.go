@@ -13,13 +13,13 @@ import (
 	"go4.org/sort"
 )
 
-//site information
+// site information
 type BitcoinSite struct {
 	Site string
 	T    string
 }
 
-//tx relational information
+// tx relational information
 type TxInfo struct {
 	IsIN     bool
 	Updated  bool
@@ -31,14 +31,14 @@ type TxInfo struct {
 	Amount   float64
 }
 
-//read configuration
+// read configuration
 var sites = beego.AppConfig.Strings("watchsite")
 var types = beego.AppConfig.Strings("watchtype")
 
 var self *MainController
 var once sync.Once
 
-//just do this
+// just do this
 type MainController struct {
 	beego.Controller
 
@@ -64,26 +64,26 @@ func GetMainController() *MainController {
 }
 
 func StoreAllBitSite() {
-	//get all sites
+	// get all sites
 	for index, value := range sites {
 		self.siteInfo = append(self.siteInfo, BitcoinSite{value, types[index]})
 	}
 }
 
-//Get Method for data list
+// Get Method for data list
 func (c *MainController) Index() {
 	controller := GetMainController()
 	controller.lock.RLock()
 	defer controller.lock.RUnlock()
 
-	//delivery to template
+	// delivery to template
 	c.Data["str"] = controller.str
 	c.Data["lists"] = controller.info
 	c.TplName = "index.html"
 }
 
-//get http raw data
-func getContet(url string) string {
+// get http raw data
+func getContent(url string) string {
 	get, err := http.Get(url + "/tx")
 	if err != nil {
 		fmt.Println(err)
@@ -94,7 +94,7 @@ func getContet(url string) string {
 	return string(content)
 }
 
-//store data
+// store data
 func (c *MainController) StoreDate() {
 	info := make(map[string][]TxInfo)
 	str := make([]string, 0)
@@ -111,20 +111,20 @@ func (c *MainController) StoreDate() {
 			prefix = beego.AppConfig.String("bchprefix")
 		}
 
-		content := getContet(prefix + value.Site)
+		content := getContent(prefix + value.Site)
 
 		hash := gjson.Get(content, "data.list.#.hash").Array()
 
-		//if you just want inputs_value, please justify as following:
-		//amount := gjson.Get(content, "data.list.#.inputs_value").Array()
+		// if you just want inputs_value, please justify as following:
+		// amount := gjson.Get(content, "data.list.#.inputs_value").Array()
 		amount := gjson.Get(content, "data.list.#.outputs_value").Array()
 		created := gjson.Get(content, "data.list.#.created_at").Array()
 		inputs := gjson.Get(content, "data.list.#.inputs").Array()
 
-		//assembly data
+		// assembly data
 		for index, iterm := range hash {
 			txinfo := TxInfo{}
-			//just support BTC and BCH
+			// just support BTC and BCH
 			if value.T == "BTC" {
 				txinfo.TxPrefix = "https://btc.com/"
 				txinfo.AdPrefix = "https://btc.com/"
@@ -143,18 +143,18 @@ func (c *MainController) StoreDate() {
 				txinfo.Updated = true
 			}
 
-			//justify whether income or expense
+			// justify whether income or expense
 			if !strings.Contains(inputs[index].String(), value.Site) {
 				txinfo.IsIN = true
 			}
 
-			//get final result
+			// get final result
 			info[value.Site] = append(info[value.Site], txinfo)
 		}
 
 	}
 
-	//sort map indirectly
+	// sort map indirectly
 	address := make([]string, 0)
 	for key, iterm := range info {
 		address = append(address, iterm[0].Date+key)
