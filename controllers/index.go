@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"io/ioutil"
+	"math"
 	"net/http"
 	"strings"
 	"sync"
@@ -139,7 +140,15 @@ func (c *MainController) StoreDate() {
 			tm := time.Unix(created[index].Int(), 0)
 			txinfo.Date = tm.Format("2006-01-02 15:04:05")
 			txinfo.TxID = item.String()
-			if created[index].Int() > 1514894400 {
+
+			timeLimit, err := beego.AppConfig.Int64("timelimit")
+			if err != nil {
+				logs.Error("read timelimit configuration error: ", err)
+
+				// put timeLimit aside
+				timeLimit = math.MaxInt64
+			}
+			if created[index].Int() > timeLimit {
 				if _, ok := hasUpdated[item.String()]; !ok {
 					logs.Alert("Alert: address's info has updated(%s:%s)", value.T, item)
 					hasUpdated[item.String()] = struct{}{}
