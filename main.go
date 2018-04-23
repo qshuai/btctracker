@@ -3,8 +3,9 @@ package main
 import (
 	"time"
 
-	"github.com/astaxie/beego"
 	"WatchBitcoinAddress/controllers"
+
+	"github.com/astaxie/beego"
 )
 
 func main() {
