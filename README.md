@@ -28,3 +28,7 @@ bee run
 go build -o tracktx main.go
 ./tracktx >> debug.log &
 ```
+
+### Notice:
+
+If you use new BCH address now, please convert it to the older one via following tool online: [https://bch.btc.com/tools/address-converter](https://bch.btc.com/tools/address-converter)
