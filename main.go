@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"WatchBitcoinAddress/controllers"
+	"btctracker/controllers"
 
 	"github.com/astaxie/beego"
 )
