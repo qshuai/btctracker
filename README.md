@@ -18,7 +18,7 @@ git clone https://github.com/qshuai/btctracker.git
 cd $GOPATH/src/btctracker.git
 glide install
 ```
-3. run 
+3. run: please configurate your `app.conf` file
 ```
 cd ./btctracker
 //if you have installed bee tool
