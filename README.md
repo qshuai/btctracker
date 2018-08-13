@@ -1,6 +1,6 @@
-## btctracker aims to monitor your specified bitcoin sites for any changes. But it only supports BTC and BCH at now, and you can edit this repository to meet your requirement.
-
 [![Go Report Card](https://goreportcard.com/badge/github.com/qshuai/btctracker)](https://goreportcard.com/report/github.com/qshuai/btctracker)
+
+btctracker aims to monitor your specified bitcoin addresses for any changes. It only supports BTC and BCH at the current version.
 
 ### Features:
 
