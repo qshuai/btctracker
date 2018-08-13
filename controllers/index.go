@@ -120,7 +120,7 @@ func (c *MainController) StoreDate() {
 		// if you just want inputs_value, please justify as following:
 		// amount := gjson.Get(content, "data.list.#.inputs_value").Array()
 		amount := gjson.Get(content, "data.list.#.outputs_value").Array()
-		created := gjson.Get(content, "data.list.#.created_at").Array()
+		created := gjson.Get(content, "data.list.#.block_time").Array()
 		inputs := gjson.Get(content, "data.list.#.inputs").Array()
 
 		// assembly data
